@@ -1,5 +1,6 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 
@@ -39,23 +40,41 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   num itemIndex = 0;
   num itemCount = 0;
   bool showTab = false;
+  HttpClient client = new HttpClient();
+  
 
 
   Future<String> getData() async {
-    var response = await http.get(Uri.encodeFull(dataUrl), headers: {"Accept": "application/json"});
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(dataUrl));
+    request.headers.set('content-type', 'application/json');
+
+      HttpClientResponse response = await request.close();
+
+      String reply = await response.transform(utf8.decoder).join();
+
+      print(reply);
+
+
+    print('aaaaa');
+    //var response = await http.get(Uri.encodeFull(dataUrl), headers: {"Accept": "application/json"});
+    //var r = await Requests.get(dataUrl);
+    print('ccccc');
     setState(() {
-    var extractData = json.decode(response.body);
+      print('bbbbb');
+    var extractData = json.decode(reply);
     dishes = extractData[0]["table_menu_list"];
     _tabController = TabController(length: dishes.length, vsync: this,initialIndex: 0);
     showTab = true;
     });
-    return response.body;
+    return reply;
   }
 
   @override
   void initState() {
     super.initState();
     getData();
+    print('aaaa');
   }
 
   @override
@@ -170,7 +189,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               height: 60,
               width: 60,
               child: Image.network(dishes[itemIndex]["category_dishes"][index]["dish_image"],fit: BoxFit.cover,),
-            )
+            ),
+            leading: Container(
+              width: 30,
+              margin: EdgeInsets.only(left: 10),
+              child: Image.asset(dishes[itemIndex]["category_dishes"][index]["dish_Type"] == 2?'assets/veg.png':'assets/nonVeg.png'),
+            ),
           );
   }
 
@@ -181,7 +205,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       children: [
         Column(children: [
           Container(
-            width: 250,
+            width: 200,
             child:  Text(
             dishes[itemIndex]["category_dishes"][index]["dish_name"],
             style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20,color: Colors.grey[800]))
@@ -230,35 +254,34 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
           child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                      if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
+                        if(itemCount > 0 && dishes[itemIndex]["category_dishes"][index]["itemCount"] > 0){
+                          itemCount -= 1;
+                          dishes[itemIndex]["category_dishes"][index]["itemCount"] -= 1;
+                        }
+                      } else {
+                        dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
+                        if(itemCount > 0){
+                          itemCount -= 1;
+                        }
+                      }
+                    
+                  });
+              },
+              child: Column(
               children: [
                 Container(
-                  padding: EdgeInsets.only(left: 15,top: 5,bottom: 5),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        
-                          if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
-                            if(itemCount > 0 && dishes[itemIndex]["category_dishes"][index]["itemCount"] > 0){
-                              itemCount -= 1;
-                              dishes[itemIndex]["category_dishes"][index]["itemCount"] -= 1;
-                            }
-                          } else {
-                            dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
-                            if(itemCount > 0){
-                              itemCount -= 1;
-                            }
-                          }
-                        
-                      });
-                    },
-                    child: Text(
+                  padding: EdgeInsets.only(left: 15,top: 0,bottom: 0),
+                  child: Text(
                       '-',
-                      style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 25)
+                      style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 30)
                       ),
-                  ),
                 )
               ],
+            ),
             ),
             Column(
               children: [
@@ -270,30 +293,30 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 )
               ],
             ),
-            Column(
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
+                    dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1;
+                  } else {
+                    dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
+                    dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1; 
+                  }
+                  itemCount += 1;
+                });
+              },
+              child: Column(
               children: [
                 Container(
-                  padding: EdgeInsets.only(right: 15,top: 5,bottom: 5),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
-                          dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1;
-                        } else {
-                          dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
-                          dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1; 
-                        }
-                        itemCount += 1;
-                      });
-                    },
-                    child: Text(
+                  padding: EdgeInsets.only(right: 15,top: 0,bottom: 0),
+                  child: Text(
                       '+',
-                      style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 25)
+                      style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 30)
                       ),
-                  ),
                 )
               ],
             )
+            ),
           ],
         ),
         ),
