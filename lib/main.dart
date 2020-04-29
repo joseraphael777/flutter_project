@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
+
 
 void main() {
   runApp(MyApp());
@@ -38,13 +40,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   num itemCount = 0;
   bool showTab = false;
 
+
   Future<String> getData() async {
     var response = await http.get(Uri.encodeFull(dataUrl), headers: {"Accept": "application/json"});
-
     setState(() {
     var extractData = json.decode(response.body);
     dishes = extractData[0]["table_menu_list"];
-    print(dishes.length);
     _tabController = TabController(length: dishes.length, vsync: this,initialIndex: 0);
     showTab = true;
     });
@@ -54,15 +55,15 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    getData(); 
+    getData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text('UNI Resto Cafe', style: TextStyle(color: Colors.grey[800])),
+        backgroundColor: Colors.white,
+        title: Text('UNI Resto Cafe ', style: TextStyle(color: Colors.grey[800])),
         leading: Icon(Icons.arrow_back,color: Colors.black,),
         bottom: showTab?  TabBar(
             controller: _tabController,
@@ -90,16 +91,21 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               Text('My Orders', style: TextStyle(color: Colors.grey[800], fontSize: 15, fontWeight: FontWeight.bold),),
               Stack(
                 children: [
-                  Icon(Icons.shopping_cart,color: Colors.black,),
+                  GestureDetector(
+                    onTap: () {
+                      getData();
+                    },
+                    child: Icon(Icons.shopping_cart,color: Colors.black,),
+                  ),
                   new Positioned(
                       top: 1.0,
-                      right: -3.0,
+                      right: 0.0,
                       child: Container(
                           height: 15,
                           width: 15,
                           decoration: BoxDecoration(
                             color: Colors.red,
-                            borderRadius: BorderRadius.circular(5)
+                            borderRadius: BorderRadius.circular(10)
                           ),
                           child: Center(
                             child: new Text(
@@ -123,14 +129,14 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       body: Stack(
         children: [
           Visibility(
-            visible: showTab == true?true:false,
+            visible: showTab?true:false,
             child: bodyItem()
           ),
           Visibility(
-            visible: showTab == false? true: false,
+            visible: showTab?false:true,
             child: Center(
               child: Container(
-                padding: EdgeInsets.only(top: 100.0),
+                padding: EdgeInsets.only(top: 10.0),
                 child: CircularProgressIndicator(
                 backgroundColor: Colors.transparent,
               ),
@@ -231,9 +237,19 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        if(itemCount > 0){
-                          itemCount -= 1;
-                        }
+                        
+                          if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
+                            if(itemCount > 0 && dishes[itemIndex]["category_dishes"][index]["itemCount"] > 0){
+                              itemCount -= 1;
+                              dishes[itemIndex]["category_dishes"][index]["itemCount"] -= 1;
+                            }
+                          } else {
+                            dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
+                            if(itemCount > 0){
+                              itemCount -= 1;
+                            }
+                          }
+                        
                       });
                     },
                     child: Text(
@@ -248,8 +264,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               children: [
                 Container(
                   margin: EdgeInsets.only(top: 7,bottom: 5),
-                  child: Text(
-                  itemCount.toString(),
+                  child: Text( dishes[itemIndex]["category_dishes"][index]["itemCount"] != null?dishes[itemIndex]["category_dishes"][index]["itemCount"].toString():0.toString(),
                   style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 20)
                   )
                 )
@@ -262,6 +277,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
+                        if(dishes[itemIndex]["category_dishes"][index]["itemCount"] != null) {
+                          dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1;
+                        } else {
+                          dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
+                          dishes[itemIndex]["category_dishes"][index]["itemCount"] += 1; 
+                        }
                         itemCount += 1;
                       });
                     },
