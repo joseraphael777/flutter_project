@@ -264,9 +264,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                         }
                       } else {
                         dishes[itemIndex]["category_dishes"][index]["itemCount"] = 0;
-                        if(itemCount > 0){
+/*                         if(itemCount > 0){
                           itemCount -= 1;
-                        }
+                        } */
                       }
                     
                   });
